@@ -29,14 +29,14 @@ const FONTSET: [u8; FONTSET_SIZE] = [
 ];
 
 type Register = u8;
-type ProgramCounter = u16;
 type Address = u16;
 type Location = u8;
 type StackPointer = u16;
 type Timer = u8;
+type Opcode = u16;
 
 pub struct Emulator {
-    pc: ProgramCounter,
+    pc: Address,
     ram: [Location; RAM_SIZE],
     address_register: Address,
     registers: [Register; NUM_REGS],
@@ -68,7 +68,7 @@ impl Default for Emulator {
 impl Emulator {
     pub fn new() -> Self {
         let mut emu: Emulator = Default::default();
-        
+
         // Load sprites into RAM
 
         emu.ram[..FONTSET_SIZE].copy_from_slice(&FONTSET);
@@ -89,6 +89,32 @@ impl Emulator {
         self.sound_timer = 0;
 
         self.ram[..FONTSET_SIZE].copy_from_slice(&FONTSET);
+    }
+
+    pub fn tick(&mut self) {
+        // Fetch
+        let instruction = self.fetch();
+        // Decode
+        // Execute
+    }
+
+    fn fetch(&mut self) -> Opcode {
+        let higher = self.ram[self.pc as usize] as u16;
+        let lower = self.ram[self.pc as usize + 1] as u16;
+        self.pc += 2;
+        (higher << 8) | lower
+    }
+
+    pub fn tick_timers(&mut self) {
+        if self.delay_timer > 0 {
+            self.delay_timer -= 1
+        };
+        if self.sound_timer > 0 {
+            if self.sound_timer == 1 {
+                // BEEP
+            }
+            self.sound_timer -= 1;
+        };
     }
 
     fn push(&mut self, addr: Address) {
