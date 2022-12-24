@@ -200,6 +200,33 @@ impl Emulator {
                 let nn = (instruction & 0xFF) as u8;
                 self.registers[x as usize] = self.rand() & nn;
             },
+            (0xD, x, y, sprite_height) => {
+                let x_coord = self.registers[x as usize] as usize;
+                let y_coord = self.registers[y as usize] as usize;
+                let start = self.address_register as usize;
+
+                let mut flipped = false;
+
+                for row  in 0..(sprite_height as usize) {
+                    let pixels = self.ram[start + row];
+                    for digit in 0..8 {
+                        let pixel = pixels & 0x80 >> digit;
+                        // It doesn't clear the screen so we only flip if it's a 1
+                        if pixel != 0 {
+                            // Sprites wrap around the screen
+                            let x = (x_coord + digit) % SCREEN_WIDTH;
+                            let y = (y_coord + row) % SCREEN_HEIGHT;
+                            let idx = x + SCREEN_WIDTH * y;
+                            flipped |= self.display[idx];
+
+                            // Flip
+                            self.display[idx] ^= true;
+                        }
+                    }
+                }
+
+                self.registers[0xF] = if flipped { 1 } else { 0 };
+            },
             (_, _, _, _) => unimplemented!("Unimplemented opcode: {}!", instruction),
         }
     }
