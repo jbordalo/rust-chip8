@@ -227,6 +227,18 @@ impl Emulator {
 
                 self.registers[0xF] = if flipped { 1 } else { 0 };
             },
+            (0xE, x, 0x9, 0xE) => {
+                let key = self.registers[x as usize];
+                if self.keys[key as usize] {
+                    self.pc += 2;
+                }
+            },
+            (0xE, x, 0xA, 0x1) => {
+                let key = self.registers[x as usize];
+                if !self.keys[key as usize] {
+                    self.pc += 2;
+                }
+            },
             (_, _, _, _) => unimplemented!("Unimplemented opcode: {}!", instruction),
         }
     }
