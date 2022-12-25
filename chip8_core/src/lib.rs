@@ -258,6 +258,39 @@ impl Emulator {
             (0xF, x, 0x1, 0xE) => {
                 self.address_register = self.address_register.wrapping_add(self.registers[x as usize] as u16);
             },
+            (0xF, x, 0x2, 0x9) => {
+                // Character 0 to 0xF
+                let character = self.registers[x as usize] as Address;
+                // Each character is 5 bytes long. Storage starts at the beginning of RAM
+                self.address_register = character * 5;
+            },
+            (0xF, x, 0x3, 0x3) => {
+                let target = self.registers[x as usize] as f32;
+
+                // BCD
+                let hundreds = (target / 100.0).floor() as u8;
+                let decimals = ((target / 100.0) % 10.0).floor() as u8;
+                let ones = (target % 10.0) as u8;
+                
+                let idx = self.address_register as usize;
+
+                self.ram[idx] = hundreds;
+                self.ram[idx + 1] = decimals;
+                self.ram[idx + 2] = ones;
+
+            },
+            (0xF, x, 0x5, 0x5) => {
+                let start = self.address_register as usize;
+                let last_reg = x as usize;
+                self.ram[start..=start+last_reg].copy_from_slice(&self.registers[0..=last_reg]);
+
+            },
+            (0xF, x, 0x6, 0x5) => {
+                let start = self.address_register as usize;
+                let last_reg = x as usize;
+                self.registers[0..=last_reg].copy_from_slice(&self.ram[start..=start+last_reg]);
+
+            },
             (_, _, _, _) => unimplemented!("Unimplemented opcode: {}!", instruction),
         }
     }
