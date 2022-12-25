@@ -239,6 +239,25 @@ impl Emulator {
                     self.pc += 2;
                 }
             },
+            (0xF, x, 0x0, 0x7) => {
+                self.registers[x as usize] = self.delay_timer;
+            },
+            (0xF, x, 0x0, 0xA) => {
+                // When a key is pressed, store it in VX
+                match self.keys.iter().position(|&key| key) {
+                    Some(i) => self.registers[x as usize] = i as Register,
+                    None => self.pc -= 2, 
+                }
+            },
+            (0xF, x, 0x1, 0x5) => {
+                self.delay_timer = self.registers[x as usize];
+            },
+            (0xF, x, 0x1, 0x8) => {
+                self.sound_timer = self.registers[x as usize];
+            },
+            (0xF, x, 0x1, 0xE) => {
+                self.address_register = self.address_register.wrapping_add(self.registers[x as usize] as u16);
+            },
             (_, _, _, _) => unimplemented!("Unimplemented opcode: {}!", instruction),
         }
     }
